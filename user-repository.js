@@ -1,5 +1,7 @@
 import DBlocal from 'db-local'
-import crypto from 'crypto'
+import crypto from 'node:crypto'
+import bcrypt from 'bcrypt'
+import { SALT_ROUNDS } from './config.js'
 
 const { Schema } = new DBlocal({ path: './db' }) // Llamada a la Base de Datos
 
@@ -10,27 +12,51 @@ const User = Schema('User', {
 })
 
 export class UserRepository {
-  static create ({ username, password }) {
-    if (typeof username !== 'string') throw new Error('Username must be a string')
-    if (username.length < 3) { throw new Error('Username must be at least 3 characters long') }
-
-    if (typeof password !== 'string') throw Error('Password must be a string')
-    if (password.length < 6) { throw new Error('Password must be at least 6 characters long') }
-
+  static async create ({ username, password }) {
+    Validation.username(username)
+    Validation.password(password)
     // Asegurarse que el Username es unico
     const user = User.findOne({ username })
     if (user) throw new Error('Username already exist')
 
     const id = crypto.randomUUID()
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS)
 
     User.create({
       _id: id,
       username,
-      password
+      password: hashedPassword
     }).save()
 
     return id
   }
 
-  static login ({ username, password }) {}
+  static async login ({ username, password }) {
+    Validation.username(username)
+    Validation.password(password)
+
+    const user = User.findOne({ username })
+    if (!user) throw new Error('username does not exist')
+
+    const isValid = await bcrypt.compare(password, user.password)
+    if (!isValid) throw new Error('password is invalid')
+    const { password: _, ...publicUser } = user // Forma elegante de quittarle props a un objeto
+    return publicUser
+  }
+}
+
+class Validation {
+  static username (username) {
+    if (typeof username !== 'string') { throw new Error('Username must be a string') }
+    if (username.length < 3) {
+      throw new Error('Username must be at least 3 characters long')
+    }
+  }
+
+  static password (password) {
+    if (typeof password !== 'string') { throw Error('Password must be a string') }
+    if (password.length < 6) {
+      throw new Error('Password must be at least 6 characters long')
+    }
+  }
 }
