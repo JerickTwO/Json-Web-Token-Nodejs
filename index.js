@@ -7,7 +7,7 @@ app.use(express.json())
 app.set('view engine', 'ejs')
 
 app.get('/', (req, res) => {
-  res.render('example', { username: 'Juan' })
+  res.render('index')
 })
 
 app.post('/login', async (req, res) => {
@@ -35,7 +35,9 @@ app.post('/register', async (req, res) => {
 
 app.post('/logout', (req, res) => {})
 
-app.get('/protected', (req, res) => {})
+app.get('/protected', (req, res) => {
+  res.render('protected')
+})
 
 app.listen(PORT, () =>
   console.log(`Server running on port ${PORT}`)
