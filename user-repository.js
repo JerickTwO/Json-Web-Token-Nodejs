@@ -1,10 +1,9 @@
-import DBlocal from 'db-local'
 import crypto from 'node:crypto'
+import DBlocal from 'db-local'
 import bcrypt from 'bcrypt'
 import { SALT_ROUNDS } from './config.js'
 
 const { Schema } = new DBlocal({ path: './db' }) // Llamada a la Base de Datos
-
 const User = Schema('User', {
   _id: { type: String, required: true },
   username: { type: String, required: true },
